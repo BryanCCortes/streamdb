@@ -27,7 +27,7 @@ The goal of this project is to showcase:
 | Language    | Python 3.13                            |
 | Framework   | FastAPI                                  |
 | ORM         | SQLAlchemy 2.x                          |
-| Database    | PostgreSQL 17                           |
+| Database    | PostgreSQL 18                           |
 | Migrations  | Alembic                                  |
 | Auth        | JWT (python-jose) + bcrypt (passlib)     |
 | Validation  | Pydantic                                 |
