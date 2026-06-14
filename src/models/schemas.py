@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from uuid import UUID
 from typing import Optional, List
+from typing import Literal
+
 
 # ========== USER ==========
 class UserRegistration(BaseModel):
@@ -40,48 +42,10 @@ class GenreResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ========== CONTENT ==========
-class ContentCreate(BaseModel):
-    title: str
-    type: str  # 'movie' o 'series'
-    description: Optional[str] = None
-    release_year: Optional[int] = None
-    avg_rating: Optional[float] = None
-    poster_url: Optional[str] = None
-    backdrop_url: Optional[str] = None
 
-class ContentResponse(BaseModel):
-    id: UUID
-    title: str
-    type: str
-    description: Optional[str] = None
-    release_year: Optional[int] = None
-    avg_rating: Optional[float] = None
-    poster_url: Optional[str] = None
-    backdrop_url: Optional[str] = None
-    is_active: bool
-
-    class Config:
-        from_attributes = True
-
-# ========== SEASON ==========
-class SeasonCreate(BaseModel):
-    content_id: UUID
-    season_number: int
-    title: Optional[str] = None
-
-class SeasonResponse(BaseModel):
-    id: UUID
-    content_id: UUID
-    season_number: int
-    title: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 # ========== EPISODE ==========
 class EpisodeCreate(BaseModel):
-    season_id: UUID
     episode_number: int
     title: str
     duration_seconds: Optional[int] = None
@@ -98,11 +62,59 @@ class EpisodeResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# ========== SEASON ==========
+class SeasonCreate(BaseModel):
+    
+    season_number: int
+    title: Optional[str] = None
+
+class SeasonResponse(BaseModel):
+    id: UUID
+    content_id: UUID
+    season_number: int
+    title: Optional[str] = None
+    episodes: List[EpisodeResponse] = []   
+
+    class Config:
+        from_attributes = True
+
+
+# ========== CONTENT ==========
+class ContentCreate(BaseModel):
+    title: str
+    type: Literal["movie", "series"]
+    description: Optional[str] = None
+    is_premium: Optional[bool] = False
+    release_year: Optional[int] = None
+    avg_rating: Optional[float] = None
+    poster_url: Optional[str] = None
+    backdrop_url: Optional[str] = None
+
+
+class ContentResponse(BaseModel):
+    id: UUID
+    title: str
+    type: Literal["movie", "series"]
+    description: Optional[str] = None
+    is_premium: bool
+    release_year: Optional[int] = None
+    avg_rating: Optional[float] = None
+    poster_url: Optional[str] = None
+    backdrop_url: Optional[str] = None
+    is_active: bool
+    genres: List[GenreResponse] = []       
+    seasons: List[SeasonResponse] = []     
+
+    class Config:
+        from_attributes = True
+
+
+
 # ========== SUBSCRIPTION PLAN ==========
 class SubscriptionPlanCreate(BaseModel):
     name: str
     price: float
-    quality: str  # 'SD', 'HD', '4K'
+    quality: str  #ejemplo 'SD', 'HD', '4K'
     max_screens: int
 
 class SubscriptionPlanResponse(BaseModel):

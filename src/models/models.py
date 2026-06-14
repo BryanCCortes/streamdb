@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Text, Integer, Float, Boolean,
-    ForeignKey, DateTime, UniqueConstraint
+    ForeignKey, DateTime, UniqueConstraint, Table
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, DeclarativeBase
@@ -10,6 +10,18 @@ from sqlalchemy.orm import relationship, DeclarativeBase
 
 class Base(DeclarativeBase):
     pass
+
+
+# ──────────────────────────────────────────
+# Tabla pivote content_genres
+# ──────────────────────────────────────────
+
+content_genres_table = Table(
+    "content_genres",
+    Base.metadata,
+    Column("content_id", ForeignKey("content.id"), primary_key=True),
+    Column("genre_id", ForeignKey("genres.id"), primary_key=True),
+)
 
 
 # ──────────────────────────────────────────
@@ -38,7 +50,7 @@ class SubscriptionPlan(Base):
     id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name        = Column(String(100), nullable=False)
     price       = Column(Float, nullable=False)
-    quality     = Column(String(10), nullable=False)   # 'SD', 'HD', '4K'
+    quality     = Column(String(10), nullable=False)
     max_screens = Column(Integer, nullable=False, default=1)
     is_active   = Column(Boolean, default=True)
 
@@ -51,7 +63,7 @@ class Subscription(Base):
     id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id    = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     plan_id    = Column(UUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=False)
-    status     = Column(String(20), nullable=False, default="active")  # 'active', 'cancelled', 'expired'
+    status     = Column(String(20), nullable=False, default="active")
     starts_at  = Column(DateTime, nullable=False, default=datetime.utcnow)
     ends_at    = Column(DateTime, nullable=True)
 
@@ -69,7 +81,7 @@ class Genre(Base):
     id   = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False)
 
-    contents = relationship("ContentGenre", back_populates="genre")
+    contents = relationship("Content", secondary=content_genres_table, back_populates="genres")
 
 
 class Content(Base):
@@ -77,29 +89,19 @@ class Content(Base):
 
     id           = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title        = Column(String(255), nullable=False, index=True)
-    type         = Column(String(20), nullable=False)   # 'movie' o 'series'
+    type         = Column(String(20), nullable=False)
     description  = Column(Text, nullable=True)
+    is_premium   = Column(Boolean, default=False, nullable=False)
     release_year = Column(Integer, nullable=True)
     avg_rating   = Column(Float, nullable=True)
     poster_url   = Column(String(500), nullable=True)
     backdrop_url = Column(String(500), nullable=True)
     is_active    = Column(Boolean, default=True, nullable=False)
 
-    genres        = relationship("ContentGenre", back_populates="content")
+    genres        = relationship("Genre", secondary=content_genres_table, back_populates="contents")
     seasons       = relationship("Season", back_populates="content")
     watch_history = relationship("WatchHistory", back_populates="content")
     watchlist     = relationship("Watchlist", back_populates="content")
-
-
-class ContentGenre(Base):
-    __tablename__ = "content_genres"
-    __table_args__ = (UniqueConstraint("content_id", "genre_id"),)
-
-    content_id = Column(UUID(as_uuid=True), ForeignKey("content.id"), primary_key=True)
-    genre_id   = Column(UUID(as_uuid=True), ForeignKey("genres.id"), primary_key=True)
-
-    content = relationship("Content", back_populates="genres")
-    genre   = relationship("Genre", back_populates="contents")
 
 
 class Season(Base):
@@ -138,7 +140,7 @@ class WatchHistory(Base):
     id               = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id          = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     content_id       = Column(UUID(as_uuid=True), ForeignKey("content.id"), nullable=False)
-    episode_id       = Column(UUID(as_uuid=True), ForeignKey("episodes.id"), nullable=True)  # null si es película
+    episode_id       = Column(UUID(as_uuid=True), ForeignKey("episodes.id"), nullable=True)
     progress_seconds = Column(Integer, default=0, nullable=False)
     completed        = Column(Boolean, default=False, nullable=False)
     watched_at       = Column(DateTime, default=datetime.utcnow, nullable=False)
