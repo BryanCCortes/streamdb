@@ -252,6 +252,13 @@ The API will be available at `http://127.0.0.1:8000`, with interactive documenta
 
 ---
 
+
+## Live Demo
+
+API deployed on Railway: [https://streamdb-production-6f21.up.railway.app](https://streamdb-production-6f21.up.railway.app)
+
+Interactive documentation: [https://streamdb-production-6f21.up.railway.app/docs](https://streamdb-production-6f21.up.railway.app/docs)
+
 ## Roadmap
 
 - [x] User authentication with JWT
@@ -262,7 +269,7 @@ The API will be available at `http://127.0.0.1:8000`, with interactive documenta
 - [x] Premium content access control based on active subscription
 - [x] Watch history tracking with progress and completion detection
 - [x] Watchlist
-- [ ] Deploy
+- [x] Deploy
 
 ---
 
