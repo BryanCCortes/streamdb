@@ -1,13 +1,13 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-
+from src.Models.models import User, Subscription, Content
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from database import Session as SessionLocal
 from src.auth.auth import decode_token
-from src.Models.models import User, Subscription
+from src.Models.models import User, Subscription, Content
 
 
 def get_db():
@@ -56,3 +56,12 @@ def get_active_subscription(user_id: UUID, db: Session) -> Optional[Subscription
             return None
 
     return subscription
+
+def access_premium_content(content, current_user: User, db: Session):
+    if content.is_premium:
+        subscription = get_active_subscription(current_user.id, db)
+        if not subscription:
+            raise HTTPException(
+                status_code=403,
+                detail="Se requiere una suscripción activa para acceder a este contenido"
+            )

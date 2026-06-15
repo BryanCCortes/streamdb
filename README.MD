@@ -2,13 +2,11 @@
 
 REST API for a streaming platform (Netflix-style), built as a portfolio project to demonstrate relational database design, authentication, and business logic implementation with **FastAPI**, **PostgreSQL**, and **SQLAlchemy**.
 
-> ⚠️ This project is under active development. Watch history, watchlist, and premium content access control are being added next.
-
 ---
 
 ## Overview
 
-StreamDB models the core domain of a video streaming service: users, subscription plans, content catalog, and active subscriptions, with JWT-based authentication and role-based access control (admin vs. regular users).
+StreamDB models the core domain of a video streaming service: users, subscription plans, content catalog, active subscriptions, watch history, and watchlist — with JWT-based authentication and role-based access control (admin vs. regular users).
 
 The goal of this project is to showcase:
 
@@ -24,13 +22,13 @@ The goal of this project is to showcase:
 
 | Layer       | Technology                                   |
 |-------------|----------------------------------------------|
-| Language    | Python 3.13.5                                  |
-| Framework   | FastAPI                                       |
+| Language    | Python 3.13.5                                |
+| Framework   | FastAPI                                      |
 | ORM         | SQLAlchemy 2.x                               |
-| Database    | PostgreSQL 18                                |
-| Migrations  | Alembic                                       |
-| Auth        | JWT (python-jose) + bcrypt (passlib)          |
-| Validation  | Pydantic                                      |
+| Database    | PostgreSQL 17                                |
+| Migrations  | Alembic                                      |
+| Auth        | JWT (python-jose) + bcrypt (passlib)         |
+| Validation  | Pydantic                                     |
 
 ---
 
@@ -44,7 +42,7 @@ streamdb/
 ├── main.py                    # FastAPI app entry point, router registration
 ├── migrations/                # Alembic migration scripts
 ├── src/
-│   ├── dependencies.py        # Shared dependencies: get_db, get_current_user, is_admin_user
+│   ├── dependencies.py        # Shared dependencies: get_db, get_current_user, is_admin_user, access_premium_content
 │   ├── auth/
 │   │   └── auth.py            # Password hashing, JWT creation/validation
 │   ├── Models/
@@ -54,7 +52,9 @@ streamdb/
 │       ├── auth.py            # /register, /login, /me, /user
 │       ├── content.py         # /content, /seasons, /episodes
 │       ├── genres.py          # /genres
-│       └── subscriptions.py   # /subscription-plans, /subscriptions
+│       ├── subscriptions.py   # /subscription-plans, /subscriptions
+│       ├── watch_history.py   # /watch-history
+│       └── watchlist.py       # /watchlist
 ├── requirements.txt
 └── .env.example
 ```
@@ -85,6 +85,10 @@ The schema covers the full domain of a streaming platform with the following key
 
 **Seasons / Episodes** — hierarchical structure for series content
 
+**Watch History** — tracks user progress per content/episode, auto-marks as completed at 90% progress
+
+**Watchlist** — users can save content to watch later
+
 ---
 
 ## Authentication & Authorization
@@ -113,7 +117,7 @@ Authentication is handled via **JWT bearer tokens**:
 
 ### Subscription Plans (admin-managed)
 
-| Method | Endpoint                   | Description             | Auth required |
+| Method | Endpoint                   | Description              | Auth required |
 |--------|----------------------------|--------------------------|---------------|
 | GET    | `/subscription-plans`      | List all active plans    | No            |
 | GET    | `/subscription-plans/{id}` | Get a specific plan      | No            |
@@ -123,12 +127,12 @@ Authentication is handled via **JWT bearer tokens**:
 
 ### Subscriptions
 
-| Method | Endpoint                      | Description                               | Auth required |
-|--------|-------------------------------|-------------------------------------------|---------------|
-| POST   | `/subscriptions`              | Subscribe the current user to a plan      | Yes           |
-| GET    | `/subscriptions`              | List the current user's subscriptions     | Yes           |
-| GET    | `/subscriptions/active`       | Get the current user's active subscription| Yes           |
-| PUT    | `/subscriptions/{id}/cancel`  | Cancel a subscription                     | Yes           |
+| Method | Endpoint                     | Description                                | Auth required |
+|--------|------------------------------|--------------------------------------------|---------------|
+| POST   | `/subscriptions`             | Subscribe the current user to a plan       | Yes           |
+| GET    | `/subscriptions`             | List the current user's subscriptions      | Yes           |
+| GET    | `/subscriptions/active`      | Get the current user's active subscription | Yes           |
+| PUT    | `/subscriptions/{id}/cancel` | Cancel a subscription                      | Yes           |
 
 ### Genres (admin-managed)
 
@@ -141,30 +145,49 @@ Authentication is handled via **JWT bearer tokens**:
 
 ### Content
 
-| Method | Endpoint         | Description                                        | Auth required |
-|--------|------------------|----------------------------------------------------|---------------|
-| GET    | `/content`       | List content (filters: `type`, `genre`, `is_premium`) | No         |
-| GET    | `/content/{id}`  | Get content detail with genres and seasons         | No            |
-| POST   | `/content`       | Create a movie or series                           | Admin         |
-| PUT    | `/content/{id}`  | Update content                                     | Admin         |
+| Method | Endpoint        | Description                                           | Auth required |
+|--------|-----------------|-------------------------------------------------------|---------------|
+| GET    | `/content`      | List content (filters: `type`, `genre`, `is_premium`) | No            |
+| GET    | `/content/{id}` | Get content detail — requires subscription if premium | Yes           |
+| POST   | `/content`      | Create a movie or series                              | Admin         |
+| PUT    | `/content/{id}` | Update content                                        | Admin         |
 
 ### Seasons & Episodes
 
-| Method | Endpoint                            | Description                  | Auth required |
-|--------|-------------------------------------|------------------------------|---------------|
-| GET    | `/content/{id}/seasons`             | List seasons of a series     | No            |
-| POST   | `/content/{id}/seasons`             | Create a season              | Admin         |
-| GET    | `/seasons/{id}/episodes`            | List episodes of a season    | No            |
-| POST   | `/seasons/{id}/episodes`            | Create an episode            | Admin         |
+| Method | Endpoint                  | Description               | Auth required |
+|--------|---------------------------|---------------------------|---------------|
+| GET    | `/content/{id}/seasons`   | List seasons of a series  | No            |
+| POST   | `/content/{id}/seasons`   | Create a season           | Admin         |
+| GET    | `/seasons/{id}/episodes`  | List episodes of a season | No            |
+| POST   | `/seasons/{id}/episodes`  | Create an episode         | Admin         |
+
+### Watch History
+
+| Method | Endpoint                    | Description                                        | Auth required |
+|--------|-----------------------------|----------------------------------------------------|---------------|
+| POST   | `/watch-history`            | Register or update watch progress for content      | Yes           |
+| GET    | `/watch-history`            | Get full watch history for the current user        | Yes           |
+| GET    | `/watch-history/{content_id}` | Get progress for a specific content              | Yes           |
+| DELETE | `/watch-history/{id}`       | Delete a watch history record                      | Yes           |
+
+### Watchlist
+
+| Method | Endpoint              | Description                          | Auth required |
+|--------|-----------------------|--------------------------------------|---------------|
+| POST   | `/watchlist`          | Add content to the watchlist         | Yes           |
+| GET    | `/watchlist`          | Get the current user's watchlist     | Yes           |
+| DELETE | `/watchlist/{id}`     | Remove content from the watchlist    | Yes           |
 
 ---
 
 ## Business Logic Highlights
 
 - **Subscription expiration**: when checking for an active subscription, the API automatically marks it as `expired` if the current date is past `ends_at`
+- **Premium content access**: `GET /content/{id}` returns `403` if the content is premium and the user has no active subscription
 - **Plan availability**: users cannot subscribe to a plan that has been deactivated by an admin
 - **Series validation**: seasons can only be created on content with `type = "series"`
 - **Duplicate genre protection**: creating a genre with an existing name returns `400` instead of a database error
+- **Watch progress tracking**: updating watch progress auto-marks content as completed when 90% is reached
 - **Role-based access**: content and plan management is restricted to users with `is_admin = true`
 
 ---
@@ -236,9 +259,9 @@ The API will be available at `http://127.0.0.1:8000`, with interactive documenta
 - [x] Content catalog (movies & series) with genre filtering
 - [x] Season and episode management for series
 - [x] Modular router structure with shared dependencies
-- [ ] Premium content access control based on active subscription
-- [ ] Watch history tracking
-- [ ] Watchlist
+- [x] Premium content access control based on active subscription
+- [x] Watch history tracking with progress and completion detection
+- [x] Watchlist
 - [ ] Deploy
 
 ---

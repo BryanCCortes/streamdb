@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from database import test_connection
-from src.routers import auth, suscriptions, genres, content
+from src.routers import auth, suscriptions, genres, content, watchlist, watch_history
  
 app = FastAPI(
     title="StreamDB API",
@@ -20,3 +20,5 @@ app.include_router(auth.router)
 app.include_router(suscriptions.router)
 app.include_router(genres.router)
 app.include_router(content.router)
+app.include_router(watchlist.router)
+app.include_router(watch_history.router)

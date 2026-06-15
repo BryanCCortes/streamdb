@@ -10,6 +10,7 @@ from src.Models.schemas import (
     SeasonCreate, SeasonResponse,
     EpisodeCreate, EpisodeResponse
 )
+from src.dependencies import access_premium_content
 
 router = APIRouter(tags=["Content"])
 
@@ -63,10 +64,16 @@ def list_content(
 
 
 @router.get("/content/{content_id}", response_model=ContentResponse)
-def get_content(content_id: str, db: Session = Depends(get_db)):
+def get_content(
+    content_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
     content = db.query(Content).filter(Content.id == content_id).first()
     if not content:
         raise HTTPException(status_code=404, detail="Contenido no encontrado")
+    
+    access_premium_content(content, current_user, db)
     return content
 
 
