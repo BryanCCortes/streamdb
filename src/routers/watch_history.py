@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.dependencies import get_db, get_current_user
-from src.Models.models import WatchHistory, Content, Episode
-from src.Models.schemas import WatchHistoryCreate, WatchHistoryResponse
+from src.models.models import WatchHistory, Content, Episode
+from src.models.schemas import WatchHistoryCreate, WatchHistoryResponse
 
 router = APIRouter(prefix="/watch-history", tags=["Watch History"])
 

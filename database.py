@@ -28,6 +28,6 @@ def test_connection():
         session.close()
 
 def create_tables():
-    from src.Models.models import Base
+    from src.models.models import Base
     Base.metadata.create_all(bind=engine)
     print("✓ Tablas creadas")

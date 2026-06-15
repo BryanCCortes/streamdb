@@ -1,13 +1,13 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from src.Models.models import User, Subscription, Content
+from src.models.models import User, Subscription, Content
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from database import Session as SessionLocal
 from src.auth.auth import decode_token
-from src.Models.models import User, Subscription, Content
+from src.models.models import User, Subscription, Content
 
 
 def get_db():

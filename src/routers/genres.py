@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from src.dependencies import get_db, get_current_user, is_admin_user
-from src.Models.models import Genre
-from src.Models.schemas import GenreCreate, GenreResponse
+from src.models.models import Genre
+from src.models.schemas import GenreCreate, GenreResponse
 
 router = APIRouter(prefix="/genres", tags=["Genres"])
 

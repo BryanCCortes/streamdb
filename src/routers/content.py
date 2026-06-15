@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.dependencies import get_db, get_current_user, is_admin_user
-from src.Models.models import Content, Season, Episode
-from src.Models.schemas import (
+from src.models.models import Content, Season, Episode
+from src.models.schemas import (
     ContentCreate, ContentResponse,
     SeasonCreate, SeasonResponse,
     EpisodeCreate, EpisodeResponse
