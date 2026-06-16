@@ -55,11 +55,11 @@ def create_content(
     if content.type == "series":
         for season_data in content.seasons:
             new_season = Season(
-            content_id=new_content.id,
-            season_number=season_data.season_number,
-            title=season_data.title
-        )
-        db.add(new_season)  
+                content_id=new_content.id,
+                season_number=season_data.season_number,
+                title=season_data.title
+            )
+            db.add(new_season)  
         
     db.commit()
     db.refresh(new_content)
