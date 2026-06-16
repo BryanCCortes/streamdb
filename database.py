@@ -1,18 +1,27 @@
+import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
 from config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 
-url = URL.create(
-    drivername="postgresql+psycopg2",
-    username=DB_USER,
-    password=DB_PASSWORD,
-    host=DB_HOST,
-    port=int(DB_PORT),
-    database=DB_NAME
-)
+# Railway DATABASE_URL
+DATABASE_URL = os.getenv("postgresql://postgres:aVRCRoNeGjxQszJJHgWjtRtXbWLFCzxv@postgres.railway.internal:5432/railway")
 
-engine = create_engine(url)
+if DATABASE_URL:
+   
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+    engine = create_engine(DATABASE_URL)
+else:
+    url = URL.create(
+        drivername="postgresql+psycopg2",
+        username=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=int(DB_PORT),
+        database=DB_NAME
+    )
+    engine = create_engine(url)
+
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def test_connection():
