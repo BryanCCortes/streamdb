@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from database import test_connection
+from database import create_tables, test_connection
 from src.routers import auth, suscriptions, genres, content, watchlist, watch_history
  
 app = FastAPI(
@@ -11,6 +11,7 @@ app = FastAPI(
 @app.on_event("startup")
 def startup():
     test_connection()
+    create_tables()
  
 @app.get("/")
 def root():
