@@ -99,7 +99,7 @@ class Content(Base):
     is_active    = Column(Boolean, default=True, nullable=False)
 
     genres        = relationship("Genre", secondary=content_genres_table, back_populates="contents")
-    seasons       = relationship("Season", back_populates="content")
+    seasons = relationship("Season", back_populates="content", cascade="all, delete-orphan")
     watch_history = relationship("WatchHistory", back_populates="content")
     watchlist     = relationship("Watchlist", back_populates="content")
 
@@ -113,7 +113,7 @@ class Season(Base):
     title         = Column(String(255), nullable=True)
 
     content  = relationship("Content", back_populates="seasons", lazy="joined")
-    episodes = relationship("Episode", back_populates="season")
+    episodes = relationship("Episode", back_populates="season", cascade="all, delete-orphan")
 
 
 class Episode(Base):

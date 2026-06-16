@@ -127,6 +127,21 @@ def update_content(
     db.refresh(content)
     return content
 
+@router.delete("/content/{content_id}", status_code=204)
+def delete_content(
+    content_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_admin_user(current_user):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
+    content = db.query(Content).filter(Content.id == content_id).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Contenido no encontrado")
+
+    content.is_active = False
+    db.commit()
 
 # ── Temporadas ───────────────────────────────────────────
 
