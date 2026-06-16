@@ -12,7 +12,7 @@ from alembic import context
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
-from src.Models.models import Base
+from src.models.models import Base
 
 
 config = context.config
