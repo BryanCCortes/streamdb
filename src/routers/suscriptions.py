@@ -156,3 +156,35 @@ def cancel_subscription(
     db.commit()
     db.refresh(subscription)
     return subscription
+
+@router.delete("/subscription-plans/{plan_id}", status_code=204)
+def delete_subscription_plan(
+    plan_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not is_admin_user(current_user):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
+    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+
+    
+    active_subs = db.query(Subscription).filter(
+        Subscription.plan_id == plan_id,
+        Subscription.status == "active"
+    ).count()
+
+    if active_subs > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar un plan con suscripciones activas"
+        )
+
+    db.query(Subscription).filter(
+        Subscription.plan_id == plan_id
+    ).delete(synchronize_session=False)
+
+    db.delete(plan)
+    db.commit()
