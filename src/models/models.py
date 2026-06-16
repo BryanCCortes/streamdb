@@ -62,7 +62,7 @@ class Subscription(Base):
 
     id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id    = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    plan_id    = Column(UUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=False)
+    plan_id    = Column(UUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=True)
     status     = Column(String(20), nullable=False, default="active")
     starts_at  = Column(DateTime, nullable=False, default=datetime.utcnow)
     ends_at    = Column(DateTime, nullable=True)
@@ -112,7 +112,7 @@ class Season(Base):
     season_number = Column(Integer, nullable=False)
     title         = Column(String(255), nullable=True)
 
-    content  = relationship("Content", back_populates="seasons")
+    content  = relationship("Content", back_populates="seasons", lazy="joined")
     episodes = relationship("Episode", back_populates="season")
 
 

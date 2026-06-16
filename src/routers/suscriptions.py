@@ -170,7 +170,7 @@ def delete_subscription_plan(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
 
-    
+
     active_subs = db.query(Subscription).filter(
         Subscription.plan_id == plan_id,
         Subscription.status == "active"
@@ -182,9 +182,10 @@ def delete_subscription_plan(
             detail="No se puede eliminar un plan con suscripciones activas"
         )
 
+    
     db.query(Subscription).filter(
         Subscription.plan_id == plan_id
-    ).delete(synchronize_session=False)
+    ).update({"plan_id": None}, synchronize_session=False)
 
     db.delete(plan)
     db.commit()

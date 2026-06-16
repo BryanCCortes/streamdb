@@ -11,6 +11,7 @@ from src.models.schemas import (
     EpisodeCreate, EpisodeResponse
 )
 from src.dependencies import access_premium_content
+from src.models.models import Genre
 
 router = APIRouter(tags=["Content"])
 
@@ -26,21 +27,43 @@ def create_content(
     if not is_admin_user(current_user):
         raise HTTPException(status_code=403, detail="Acceso denegado")
 
+    if not content.genre_ids:
+        raise HTTPException(status_code=400, detail="El contenido debe tener al menos un género")
+
+    found_genres = db.query(Genre).filter(Genre.id.in_(content.genre_ids)).all()
+
+    if len(found_genres) != len(content.genre_ids):
+        raise HTTPException(status_code=404, detail="Uno o más géneros no existen")
+
     new_content = Content(
-        title=content.title,
-        type=content.type,
-        description=content.description,
-        is_premium=content.is_premium,
-        release_year=content.release_year,
-        avg_rating=content.avg_rating,
-        poster_url=content.poster_url,
-        backdrop_url=content.backdrop_url,
-    )
+    title=content.title,
+    type=content.type,
+    description=content.description,
+    is_premium=content.is_premium,
+    release_year=content.release_year,
+    avg_rating=content.avg_rating,
+    poster_url=content.poster_url,
+    backdrop_url=content.backdrop_url,
+    genres=found_genres
+)
     db.add(new_content)
+    db.flush()  
+
+    if content.type == "movie" and content.seasons:
+        raise HTTPException(status_code=400, detail="Solo las series pueden tener temporadas")
+
+    if content.type == "series":
+        for season_data in content.seasons:
+            new_season = Season(
+            content_id=new_content.id,
+            season_number=season_data.season_number,
+            title=season_data.title
+        )
+        db.add(new_season)  
+        
     db.commit()
     db.refresh(new_content)
     return new_content
-
 
 @router.get("/content", response_model=List[ContentResponse])
 def list_content(
@@ -144,10 +167,10 @@ def list_seasons(content_id: str, db: Session = Depends(get_db)):
 
 # ── Episodios ────────────────────────────────────────────
 
-@router.post("/seasons/{season_id}/episodes", response_model=EpisodeResponse, status_code=201)
+@router.post("/seasons/{season_id}/episodes", response_model=List[EpisodeResponse], status_code=201)
 def create_episode(
     season_id: str,
-    episode: EpisodeCreate,
+    episodes: List[EpisodeCreate],
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -158,18 +181,20 @@ def create_episode(
     if not season:
         raise HTTPException(status_code=404, detail="Temporada no encontrada")
 
-    new_episode = Episode(
-        season_id=season_id,
-        episode_number=episode.episode_number,
-        title=episode.title,
-        duration_seconds=episode.duration_seconds,
-        video_url=episode.video_url
-    )
-    db.add(new_episode)
-    db.commit()
-    db.refresh(new_episode)
-    return new_episode
+    new_episodes = []
+    for episode in episodes:
+        new_episode = Episode(
+            season_id=season_id,
+            episode_number=episode.episode_number,
+            title=episode.title,
+            duration_seconds=episode.duration_seconds,
+            video_url=episode.video_url
+        )
+        db.add(new_episode)
+        new_episodes.append(new_episode)
 
+    db.commit()
+    return new_episodes
 
 @router.get("/seasons/{season_id}/episodes", response_model=List[EpisodeResponse])
 def list_episodes(season_id: str, db: Session = Depends(get_db)):

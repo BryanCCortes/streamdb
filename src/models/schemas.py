@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import Optional, List
 from typing import Literal
-
+from pydantic import model_validator
 
 # ========== USER ==========
 class UserRegistration(BaseModel):
@@ -64,7 +64,6 @@ class EpisodeResponse(BaseModel):
 
 # ========== SEASON ==========
 class SeasonCreate(BaseModel):
-    
     season_number: int
     title: Optional[str] = None
 
@@ -72,11 +71,19 @@ class SeasonResponse(BaseModel):
     id: UUID
     content_id: UUID
     season_number: int
+    content_title: Optional[str] = None
     title: Optional[str] = None
-    episodes: List[EpisodeResponse] = []   
+    episodes: List[EpisodeResponse] = []
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode='before')
+    @classmethod
+    def get_content_title(cls, data):
+        if hasattr(data, 'content') and data.content:
+            data.__dict__['content_title'] = data.content.title
+        return data
 
 
 # ========== CONTENT ==========
@@ -89,6 +96,8 @@ class ContentCreate(BaseModel):
     avg_rating: Optional[float] = None
     poster_url: Optional[str] = None
     backdrop_url: Optional[str] = None
+    genre_ids: List[UUID]
+    seasons: Optional[List[SeasonCreate]] = []
 
 
 class ContentResponse(BaseModel):
