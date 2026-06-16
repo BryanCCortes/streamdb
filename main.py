@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from database import create_tables, test_connection
 from src.routers import auth, suscriptions, genres, content, watchlist, watch_history
- 
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
+
 app = FastAPI(
     title="StreamDB API",
     description="REST API for a streaming platform built with FastAPI and PostgreSQL",
-    version="0.1.0"
+    version="0.1.0",
 )
  
 @app.on_event("startup")

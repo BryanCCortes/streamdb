@@ -4,11 +4,14 @@ from datetime import datetime
 from src.models.models import User, Subscription, Content
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
-
+from fastapi.security import HTTPBearer
 from database import Session as SessionLocal
 from src.auth.auth import decode_token
 from src.models.models import User, Subscription, Content
 
+
+
+security = HTTPBearer()
 
 def get_db():
     db = SessionLocal()
@@ -19,13 +22,10 @@ def get_db():
 
 
 def get_current_user(
-    authorization: Optional[str] = Header(None),
+    credentials=Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token no proporcionado")
-
-    token = authorization.replace("Bearer ", "")
+    token = credentials.credentials
     email = decode_token(token)
 
     if email is None:
